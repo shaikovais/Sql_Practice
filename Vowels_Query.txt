@@ -1,0 +1,7 @@
+Problem Statement : City names Not starting OR Ending with Vowels!
+
+
+select distinct city from
+(
+select city, upper(substr(city,0,1)) as firstletter , upper(substr(city,-1)) as lastletter from station) a 
+where a.firstletter not in ('A','E','I','O','U') OR a.lastletter not in ('A','E','I','O','U');
