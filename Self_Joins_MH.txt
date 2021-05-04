@@ -1,0 +1,160 @@
+Problem Statement : Percentage change Active users from Logins table month over month .
+
+| user_id | date       |
+|---------|------------|
+| 1       | 2018-07-01 |
+| 234     | 2018-07-02 |
+| 3       | 2018-07-02 |
+| 1       | 2018-07-02 |
+| ...     | ...        |
+| 234     | 2018-10-04 |
+
+with temp as 
+( 
+Select
+   DATE_TRUNC('month', date) month_timestamp,
+    COUNT(DISTINCT user_id) active_users ,
+  FROM 
+    logins 
+  GROUP BY 
+    DATE_TRUNC('month', date)
+  )
+
+select
+
+a.month_timestamp prev_month,
+a.active_users  previous_month_users,
+b.month_timestamp curr_month,
+b.active_users  current_month_users,
+Round(100 * (b.active_users - a.active_users ) / a.active_users ,2 ) As percent
+from 
+temp a 
+join temp b on a. month_timestamp = b.month_timestamp - interval '1 month'
+
+=============
+BInary Tree 
+
+node   parent
+1       2
+2       5
+3       5
+4       3
+5       NULL 
+
+O/p
+node    label  
+1       Leaf
+2       Inner
+3       Inner
+4       Leaf
+5       Root
+
+==
+Depth =2
+with temp as
+(
+Select a.node anode,
+a.parent aparent,
+b.node bnode,
+b.parent bparent
+from tree a left join tree b on a.parent=b.node)
+select 
+anode node,
+Case 
+when bnode is null and bparent is null then 'Root'
+when bnode is not null and bparent is not null 'Leaf'
+else 'Inner' end
+from temp
+
+== General solution regarless of tree depth
+
+with temp as
+(
+select curr.node,
+curr.parent,
+count(next.node) as child_count
+from tree curr 
+left join tree next 
+On curr.node= next.parent
+group by 
+curr.node,
+curr.parent
+)
+select node ,
+Case when parent is null then "Root"
+when child_count=0 then "leaf"
+else "inner" end
+from temp
+
+===  
+Solution with INline queries
+
+select node ,
+Case 
+when parent is null then "Root"
+when node not in (select parent from tree where parent is not null) then "Leaf"
+when node in (Select parent from tree) then "Inner"
+end  from tree;
+
+=================================================================
+
+Month retained users who logged in this month and next month
+for Orace we can use add month condition
+DATE_TRUNC('month', a.date) == Will give you begining of the month
+values date_trunc('MONTH', DATE('2007-02-18'))
+      Result: 2007-02-01 00:00:00
+
+select DATE_TRUNC('month', a.date) month_timestamp,
+count (distinct a.user_id) a.retained
+from logins a join logins b on a.user_id=b.user_id
+and date_trun ('month',a.date) = date_trun('month,b.date) + interval '1 month'
+group by 
+date_trunc('month',a.date)
+
+======
+alternalte dolution
+
+/*dedup the data*/
+with temp as 
+(
+select distinct 
+date_trunc('month',a.date) as month_timestamp,
+user_id from logins
+)
+select curr.month_timestamp,
+count(prior.user_id) as retained
+from 
+temp curr 
+left join temp prior 
+On 
+curr.month_timestamp = prior.month_timestamp + interval '1 month'
+and curr.user_id= prev.user_id
+group by curr.month_timestamp
+
+===
+IF you change the join from inner to Left 
+and add a where condition to identify users who have not come back
+
+select DATE_TRUNC('month', a.date) month_timestamp,
+count (distinct a.user_id) a.lost_users /*counting nulls basically */
+from logins a left join logins b on a.user_id=b.user_id
+and date_trun ('month',a.date) = date_trun('month,b.date) + interval '1 month'
+where a._user_id is null
+group by 
+date_trunc('month',a.date)
+
+====== Reactivated Users variation for same ========
+An example of this could be a user active in February (appears in logins), no activity in March and April, but then active again in May (appears in logins), so they count as a reactivated user for May 
+
+
+select DATE_TRUNC('month', a.date) month_timestamp,
+count (distinct a.user_id) a.reactv_users
+max( date_trunc( 'month', b.date) ) recent_activity
+from 
+logins a join logins b on a.user_id=b.user_id
+and date_trunc ('month',a.date) > date_trunc('month,b.date) 
+group by 
+DATE_TRUNC('month', a.date) month_timestamp
+having 
+month_timestamp > recent_activity + interval '1 month'
+==============
