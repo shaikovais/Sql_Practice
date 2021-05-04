@@ -1,0 +1,31 @@
+Write a query to get cumulative cash flow for each day
+
+| date       | cumulative_cf |
+|------------|---------------|
+| 2018-01-01 | -1000         |
+| 2018-01-02 | -1100         |
+| 2018-01-03 | -1050         |
+| ...        | ...           |
+
+
+Self Join / In efficient 
+
+SELECT 
+    a.date date, 
+    SUM(b.cash_flow) as cumulative_cf 
+FROM
+    transactions a
+JOIN b 
+    transactions b ON a.date >= b.date 
+GROUP BY 
+    a.date 
+ORDER BY 
+    date ASC
+
+====Window functions More efficient 
+
+select date ,
+SUM(b.cash_flow) over (ORDER BY date ASC)
+from transactions
+order by date asc
+========

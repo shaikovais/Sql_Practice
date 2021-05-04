@@ -1,0 +1,26 @@
+Write a query to get 7-day rolling (preceding) average of daily sign ups. 
+
+| date       | sign_ups |
+|------------|----------|
+| 2018-01-01 | 10       |
+| 2018-01-02 | 20       |
+| 2018-01-03 | 50       |
+| ...        | ...      |
+| 2018-10-01 | 35       |
+
+select 
+a.date ,
+avg(b.sign_ups) avg_sign_ups
+from
+signups a
+join 
+signups b 
+on a.date <= b.date + interval '6 days' AND a.date >= b.date
+group by 
+a.date
+==
+SELECT 
+    date,       
+    AVG(sign_ups) OVER(ORDER BY date ROWS BETWEEN 6 PRECEDING AND 0 PRECEDING)
+from 
+    sign_ups 
