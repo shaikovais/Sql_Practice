@@ -1,0 +1,24 @@
+| id | subject  | from         | to           | timestamp           |
+|----|----------|--------------|--------------|---------------------|
+| 1  | Yosemite | zach@g.com   | thomas@g.com | 2018-01-02 12:45:03 |
+| 2  | Big Sur  | sarah@g.com  | thomas@g.com | 2018-01-02 16:30:01 |
+| 3  | Yosemite | thomas@g.com | zach@g.com   | 2018-01-02 16:35:04 |
+| 4  | Running  | jill@g.com   | zach@g.com   | 2018-01-03 08:12:45 |
+| 5  | Yosemite | zach@g.com   | thomas@g.com | 2018-01-03 14:02:01 |
+| 6  | Yosemite | thomas@g.com | zach@g.com   | 2018-01-03 15:01:05 |
+| .. | ..       | ..           | ..           | ..                  |
+
+*Task:* Write a query to get the response time per email (id) sent to zach@g.com . Do not include ids that did not receive a response from zach@g.com. Assume each email thread has a unique subject. 
+Keep in mind a thread may have multiple responses back-and-forth between zach@g.com and another email address.
+
+Select 
+a.id 
+min (b.timestamp) - a.timestamp as timetorespond
+from emails a
+join emails b
+on b.subject=a.subject
+and a.to = b.from 
+and a.from= b.to
+and a.timestamp < b.timestamp
+where a.to ='zach@g.com'
+group by a.id
