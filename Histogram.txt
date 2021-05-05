@@ -1,0 +1,31 @@
+Problem statement :Write a query to count the number of sessions that fall into bands of size 5,
+
+| session_id | length_seconds |
+|------------|----------------|
+| 1          | 23             |
+| 2          | 453            |
+| 3          | 27             |
+| ..         | ..             |
+
+===
+| bucket  | count |
+|---------|-------|
+| 20-25   | 2     |
+| 450-455 | 1     |
+==
+
+WITH bin_label AS 
+(SELECT 
+    session_id, 
+    FLOOR(length_seconds/5) as bin_label 
+ FROM
+    sessions 
+ )
+ SELECT 
+    CONCATENTATE(STR(bin_label*5), '-', STR(bin_label*5+5)) bucket, 
+    COUNT(DISTINCT session_id) count 
+ GROUP BY 
+    bin_label
+ ORDER BY 
+    bin_label ASC
+
