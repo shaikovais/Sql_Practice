@@ -1,0 +1,52 @@
+| user | class |
+|------|-------|
+| 1    | a     |
+| 1    | b     |
+| 1    | b     |
+| 2    | b     |
+| 3    | a     |
+
+
+
+Easy ==
+SELECT 
+    "a" class,
+    COUNT(DISTINCT user_id) - 
+        (SELECT COUNT(DISTINCT user_id) FROM table WHERE class = 'b') count 
+UNION
+SELECT 
+    "b" class,
+    (SELECT COUNT(DISTINCT user_id) FROM table WHERE class = 'b') count 
+
+=====
+WITH usr_b_sum AS 
+(
+    SELECT 
+        user, 
+        SUM(CASE WHEN class = 'b' THEN 1 ELSE 0 END) num_b
+    FROM 
+        table
+    GROUP BY 
+        user
+), 
+
+usr_class_label AS 
+(
+    SELECT 
+        user, 
+        CASE WHEN num_b > 0 THEN 'b' ELSE 'a' END class 
+    FROM 
+        usr_b_sum
+)
+
+SELECT 
+    class, 
+    COUNT(DISTINCT user) count 
+FROM
+    usr_class_label
+GROUP BY 
+    class 
+ORDER BY 
+    class ASC
+
+=========

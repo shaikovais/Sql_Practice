@@ -1,0 +1,56 @@
+Problem Statement :query to get the pairs of states with total streaming amounts within 1000 of each other
+
+| state | total_streams |
+|-------|---------------|
+| NC    | 34569         |
+| SC    | 33999         |
+| CA    | 98324         |
+| MA    | 19345         |
+| ..    | ..            |
+===
+| state_a | state_b |
+|---------|---------|
+| NC      | SC      |
+| SC      | NC      |
+
+====
+select 
+
+a.state state1
+b.state state2
+from 
+state_streams a corss join state streams b
+ WHERE 
+ ABS(a.total_streams - b.total_streams) < 1000
+ AND 
+ a.state <> b.state
+
+================== Preferred============
+SELECT
+    a.state as state_a, 
+    b.state as state_b 
+ FROM   
+    state_streams a, state_streams b 
+ WHERE 
+    ABS(a.total_streams - b.total_streams) < 1000
+    AND 
+    a.state <> b.state 
+
+====================================
+| state_a | state_b |
+|---------|---------|
+| NC      | SC      |
+| SC      | NC      |
+
+If you want one entry out of the two then use greater than.
+
+SELECT
+    a.state as state_a, 
+    b.state as state_b 
+ FROM   
+    state_streams a, state_streams b 
+ WHERE 
+    ABS(a.total_streams - b.total_streams) < 1000
+    AND 
+    a.state > b.state 
+
