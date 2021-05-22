@@ -1,0 +1,26 @@
+select s.name from 
+(select a.id , b.frndsal from 
+(select f.id , salary sal from friends f , packages p where f.id = p.id) a ,
+(select f.id , friend_id,salary  frndsal from friends f , packages p where f.friend_id = p.id) b
+where a.id=b.id  and a.sal < b.frndsal ) abc , students s
+where s.id=abc.id
+order by frndsal ;
+
+NEAT
+select s.name 
+from 
+students s, 
+friends f, 
+packages p, 
+packages p2 
+where s.id = f.id and 
+f.friend_id = p2.id and f.id = p.id 
+and p.salary < p2.salary order by p2.salary;
+
+SELECT NAME
+FROM(((STUDENTS 
+     INNER JOIN FRIENDS ON STUDENTS.ID=FRIENDS.ID)
+     INNER JOIN PACKAGES ON STUDENTS.ID=PACKAGES.ID)
+     INNER JOIN PACKAGES AS P1 ON FRIENDS.FRIEND_ID=P1.ID)
+WHERE PACKAGES.SALARY < P1.SALARY
+ORDER BY P1.SALARY;

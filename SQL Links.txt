@@ -1,0 +1,25 @@
+https://towardsdatascience.com/6-incredible-resources-to-learn-advanced-sql-364fe0889dcd
+
+
+analytical queries
+
+https://oracle-base.com/articles/misc/analytic-functions#syntax
+
+
+Facebook interview
+https://www.quora.com/How-would-you-prepare-for-Data-scientist-Analytics-role-at-Facebook/answers/60757535?ch=10&share=c64f7840&srid=oVHA
+
+
+https://leetcode.com/problemset/database/
+
+==
+select name || '(' || substr(occupation,0,1) || ')'  from occupations
+
+SELECT concat(NAME,concat("(",concat(substr(OCCUPATION,1,1),")"))) FROM OCCUPATIONS ORDER BY NAME ASC;
+
+SELECT "There are total ", count(OCCUPATION), concat(lower(occupation),"s.") FROM OCCUPATIONS GROUP BY OCCUPATION ORDER BY count(OCCUPATION) ASC
+
+
+select name || '(' || substr(occupation,0,1) || ')'  from occupations order by name asc
+union all 
+select "There are total of " , count(occupation) from occupations group by occupation ;

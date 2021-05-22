@@ -1,0 +1,32 @@
+select LISTAGG(l, '&') WITHIN GROUP (ORDER BY l) from
+(
+select a.l 
+from (select level l from dual connect by level <= 1000) a
+, (select level m from dual connect by level <= 1000 ) b
+where b.m <= a.l
+group by a.l
+having count(case l/m when trunc(l/m) then 'Y' end) = 2 
+order by a.l) ;
+
+
+=====================
+select a.l , b.m , l/m , trunc(l/m) , case l/m when trunc(l/m) then 'Y' end
+from (select level l from dual connect by level <= 5) a
+, (select level m from dual connect by level <= 5 ) b
+where b.m <= a.l ;
+
+1 1 1 1 Y
+2 1 2 2 Y
+2 2 1 1 Y
+3 1 3 3 Y
+3 2 1.5 1 N
+3 3 1 1 Y
+4 1 4 4 Y
+4 2 2 2 Y
+4 3 1.33333333 1 N
+4 4 1 1 Y
+5 1 5 5 Y
+5 2 2.5 2 N
+5 3 1.66666667 1 N
+5 4 1.25 1 N
+5 5 1 1 Y
