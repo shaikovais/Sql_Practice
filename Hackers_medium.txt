@@ -1,0 +1,131 @@
+wORKING
+SELECT 
+HACKER_ID,NAME,
+CHALLENGES_CREATED
+from
+(
+SELECT 
+H.HACKER_ID,
+H.NAME,
+CHALLENGES_CREATED,
+MAX(CHALLENGES_CREATED) OVER (ORDER BY 1) AS MX_CHLNG,
+COUNT(CHALLENGES_CREATED) OVER(PARTITION BY CHALLENGES_CREATED) AS NO_OF_COMMON_CHLNG_HCKR
+FROM HACKERS H
+JOIN (
+SELECT DISTINCT
+     HACKER_ID, COUNT(*) as CHALLENGES_CREATED FROM CHALLENGES
+            group by hacker_id order by CHALLENGES_CREATED desc) C
+ON H.HACKER_ID=C.HACKER_ID
+order by CHALLENGES_CREATED ) A
+WHERE NO_OF_COMMON_CHLNG_HCKR=1 or MX_CHLNG = CHALLENGES_CREATED
+ORDER BY CHALLENGES_CREATED DESC, HACKER_ID
+;
+
+
+========
+SELECT 
+HACKER_ID,NAME,
+CHALLENGES_CREATED
+from
+(
+SELECT 
+H.HACKER_ID,
+H.NAME,
+CHALLENGES_CREATED,
+MAX(CHALLENGES_CREATED) OVER (ORDER BY 1) AS MX_CHLNG,
+COUNT(CHALLENGES_CREATED) OVER(PARTITION BY CHALLENGES_CREATED) AS NO_OF_COMMON_CHLNG_HCKR
+FROM HACKERS H
+JOIN (SELECT DISTINCT
+     HACKER_ID, COUNT(*) as CHALLENGES_CREATED FROM CHALLENGES
+      where hacker_id < 5000
+      group by hacker_id
+     )C
+ON H.HACKER_ID=C.HACKER_ID
+)A
+WHERE NO_OF_COMMON_CHLNG_HCKR=1 OR
+(CHALLENGES_CREATED>=MX_CHLNG AND NO_OF_COMMON_CHLNG_HCKR!=1)
+ORDER BY CHALLENGES_CREATED DESC, HACKER_ID
+;
+==
+
+
+
+
+
+select h.hacker_id, h.name, count(c.challenge_id) as counter
+from Hackers h
+inner join Challenges as c
+on h.hacker_id = c.hacker_id
+group by h.hacker_id, h.name
+having 
+    counter =
+        (select max(t.cnt)
+        from (select count(hacker_id) as cnt
+             from Challenges
+             group by hacker_id) t)
+    or counter in
+       (select t1.cnt 
+       from (select count(*) as cnt
+            from Challenges
+            group by hacker_id) t1
+       group by t1.cnt
+       having count(t1.cnt) =1)
+order by counter desc, h.hacker_id
+===============
+select 
+  hacker_id
+ ,name
+ ,counter
+from    (
+        select 
+          h.hacker_id
+         ,h.name
+         ,count(*) as counter
+         ,count(*) over (partition by count(*)) as no_hackers
+         ,max(count(*)) over (order by 1) as top_score
+        from hackers h 
+        join challenges c
+        on h.hacker_id=c.hacker_id
+        group by h.hacker_id, h.name
+        )
+where no_hackers=1 or counter=top_score
+order by counter desc, hacker_id;
+=======================
+SELECT HACKER_ID, NAME, CHALLENGES_CREATED FROM (
+select a.hacker_id,a.name ,challenges_created  from hackers a inner join
+(select distinct hacker_id,count(*) as challenges_created
+from challenges  group by hacker_id order by challenges_created desc ) b
+on a.hacker_id=b.hacker_id
+ ;
+
+========
+select a.hacker_id,a.name ,challenges_created , 
+max(challenges_created) over ( order by  a.hacker_id) ,
+count(challenges_created) over( partition by challenges_created) 
+from hackers a inner join 
+(select distinct hacker_id,count(challenge_id) over (partition by hacker_id) as challenges_created
+from challenges order by challenges_created desc ) b
+on a.hacker_id=b.hacker_id
+ ;
+
+SELECT 
+H.HACKER_ID,
+H.NAME,
+CHALLENGES_CREATED,
+MAX(CHALLENGES_CREATED) OVER (ORDER BY 1) AS MX_CHLNG,
+COUNT(CHALLENGES_CREATED) OVER(PARTITION BY CHALLENGES_CREATED) AS NO_OF_COMMON_CHLNG_HCKR
+FROM HACKERS H
+JOIN (SELECT DISTINCT
+     HACKER_ID, COUNT(CHALLENGE_ID) OVER (PARTITION BY HACKER_ID) AS CHALLENGES_CREATED
+     FROM CHALLENGES
+     )C
+ON H.HACKER_ID=C.HACKER_ID
+)A
+WHERE NO_OF_COMMON_CHLNG_HCKR=1 OR
+(CHALLENGES_CREATED>=MX_CHLNG AND NO_OF_COMMON_CHLNG_HCKR!=1)
+ORDER BY CHALLENGES_CREATED DESC, HACKER_ID
+;
+
+
+select count(challenge_id),hacker_id from challenges 
+group by hacker_id ;

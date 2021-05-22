@@ -1,0 +1,52 @@
+
+
+with temp as
+(select max(months*salary) as a from employee)
+select b.a ,count(*) from employee a , temp b where a.months*a.salary =b.a
+group by b.a ;
+
+==
+select avg(population) from city where upper(district)='CALIFORNIA';
+
+
+where upper(district)='CALIFORNIA';
+
+===
+SELECT CEIL(AVG(Salary) - AVG(REPLACE(Salary, '0', '')))
+FROM EMPLOYEES;
+
+====
+Round 2 places
+
+select round(sum(lat_n),2),round(sum(long_w),2) from station;
+
+===
+trunc 4 places
+
+
+select round(sum(lat_n),4) from station where round(lat_n,4) between 38.7880 and 137.2345 ;
+====
+select round(max(lat_n),4) from station where round(lat_n,4) < 137.2345 ;
+===
+select round(long_w,4) from station where round(lat_n,4) =  (select max(round(lat_n,4)) from station where round(lat_n,4) < 137.2345 );
+===
+select round(long_w,4) from station where round(lat_n,4) = (select min(round(lat_n,4)) from station where round(lat_n,4) > 38.7780 );
+====
+select round(min(lat_n),4) from station where round(lat_n,4) > 38.7780 ;
+===
+
+select sum(a.population) from city a inner join country b
+on a.countrycode = b.code
+where b.continent='Asia';
+
+=======
+select a.name from city a inner join country b
+on a.countrycode = b.code
+where b.continent='Africa';
+===
+
+select   b.continent , floor(avg(a.population)) from city a inner join country b
+on a.countrycode = b.code
+group by b.continent;
+
+=====

@@ -1,0 +1,45 @@
+An alternate yet similar methodology:
+
+
+Harry Potter and his friends are at Ollivander's with Ron, finally replacing Charlie's old broken wand.
+
+Hermione decides the best way to choose is by determining the minimum number of gold galleons needed to buy each non-evil wand of high power and age. Write a query to print the id, age, coins_needed, and power of the wands that Ron's interested in, sorted in order of descending power. If more than one wand has same power, sort the result in order of descending age.
+
+
+SELECT id, age, coins_needed, power
+FROM 
+(
+  SELECT W.id, WP.age, W.coins_needed, W.power,
+    ROW_NUMBER() OVER 
+        (
+            PARTITION BY W.code,W.power  
+            ORDER BY W.coins_needed, W.power DESC
+        ) AS RowNumber
+    FROM Wands W 
+    INNER JOIN Wands_Property WP  ON W.code = WP.code
+    WHERE WP.is_evil = 0 ) wn
+    WHERE RowNumber = 1
+ORDER BY power DESC, age DESC;
+==============
+select id, age, coins_needed, power from (
+select id, age, coins_needed, power,
+min(coins_needed) over(partition by age, power order by coins_needed) as min_coins 
+from wands w inner join wands_property w_p on w.code=w_p.code where is_evil=0 )a 
+where coins_needed - min_coins=0 order by power desc, age desc
+=======================
+select id, age, coins_needed, power from (
+select id, age, coins_needed, power,
+min(coins_needed) over(partition by age, power order by coins_needed) as min_coins 
+from wands w inner join wands_property w_p on w.code=w_p.code where is_evil=0 )a 
+where coins_needed - min_coins=0 order by power desc, age desc
+
+========substitute for 
+SELECT W.id, P.age, W.coins_needed, W.power
+FROM WANDS  W
+    INNER JOIN WANDS_PROPERTY  P ON W.code = P.code
+WHERE P.is_evil = 0 AND W.coins_needed = 
+    (SELECT MIN(coins_needed)
+     FROM WANDS  W1
+        INNER JOIN WANDS_PROPERTY  P1 ON W1.code = P1.code
+     WHERE W1.power = W.power AND P1.age = P.age)
+ORDER BY W.power DESC, P.age DESC;

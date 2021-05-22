@@ -1,0 +1,30 @@
+https://community.oracle.com/tech/developers/discussion/4417554/pl-sql-101-grouping-sequence-ranges-tabibitosan-method
+
+Use dense rank if the input has duplicates
+=============
+select min(start_date),max(end_date) from
+(
+select start_date,end_date, 
+rank() over(order by start_date)  dr ,
+end_date - rank() over(order by start_date)  group1 
+from projects)
+group by group1
+order by count(group1) asc , min(start_date) asc
+;
+============
+
+
+
+select min(day) as start_day
+      ,max(day) as end_day
+      ,count(distinct who) as sales_people
+      ,count(*) as sales_count
+      ,sum(dollars) as sales_amount
+from (-- our dense rank grouping query
+      select day, who, dollars
+            ,dense_rank() over (order by day) as rn
+            ,day-dense_rank() over (order by day) as grp
+      from   mysales
+     )
+group by grp
+order by 1

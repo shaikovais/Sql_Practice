@@ -1,0 +1,12 @@
+select hacker_id,name,sum1
+from 
+(
+select a.hacker_id,a.name,sum(b.max_indiv) as sum1 from hackers a inner join 
+(
+SELECT hacker_id,challenge_id,max(score) as max_indiv from submissions
+group by hacker_id,challenge_id  ) b
+on a.hacker_id=b.hacker_id
+group by a.hacker_id,a.name ) AB
+where sum1 <> 0
+order  by sum1 desc , hacker_id asc
+;

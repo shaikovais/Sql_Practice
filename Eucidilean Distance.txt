@@ -1,0 +1,24 @@
+https://en.wikipedia.org/wiki/Euclidean_distance
+
+d(p,q) = squareroot ( q1-p1) square + ( q2-p2) 
+
+
+select (round(max(long_w),4)+round(max(lat_n),4)) -(round(min(lat_n),4) + round(min(long_w),4)) from station   ;
+
+
+select sqrt (power((b-a),2) + power((d-c),2)) from 
+(select round(max(long_w),4) d ,round(max(lat_n),4) b , round(min(lat_n),4) a , round(min(long_w),4) c from station ) temp 
+
+
+Working and neat 
+SELECT
+    ROUND(SQRT(
+        POWER(MAX(LAT_N)  - MIN(LAT_N),  2)
+      + POWER(MAX(LONG_W) - MIN(LONG_W), 2)
+    ), 4)
+FROM 
+    STATION;
+
+Exact same output --but not acceptable
+select SQRT((power((b-a),2) + power((d-c),2))) from 
+(select round(max(long_w),4) d ,round(max(lat_n),4) b , round(min(lat_n),4) a , round(min(long_w),4) c from station ) temp  ;

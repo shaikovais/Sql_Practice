@@ -1,0 +1,13 @@
+for 20 stars to one
+SELECT   RPAD ('* ', (21-LEVEL)*2, '* ')
+FROM DUAL
+CONNECT BY LEVEL < 21
+order by level desc;
+
+ -- for one star to 20 stars 
+
+
+SELECT   RPAD ('* ', (21-LEVEL)*2, '* ')
+FROM DUAL
+CONNECT BY LEVEL < 21
+order by level desc;

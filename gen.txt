@@ -1,0 +1,34 @@
+
+
+==========
+SELECT MIN(CASE WHEN Occupation = 'Doctor' THEN Name ELSE NULL END) AS Doctor,
+ MIN(CASE WHEN Occupation = 'Professor' THEN Name ELSE NULL END) AS Professor,
+ MIN(CASE WHEN Occupation = 'Singer' THEN Name ELSE NULL END) AS Singer, 
+MIN(CASE WHEN Occupation = 'Actor' THEN Name ELSE NULL END) AS Actor 
+FROM ( SELECT a.Occupation, a.Name, DENSE_RANK() OVER (PARTITION BY a.Occupation ORDER BY a.Name) rank FROM Occupations a ) c
+ GROUP BY c.rank ORDER BY c.rank; `
+
+===
+SELECT MIN(CASE WHEN Occupation = 'Doctor' THEN Name ELSE NULL END) AS Doctor,
+MIN(CASE WHEN Occupation = 'Professor' THEN Name ELSE NULL END) AS Professor,
+MIN(CASE WHEN Occupation = 'Singer' THEN Name ELSE NULL END) AS Singer, 
+MIN(CASE WHEN Occupation = 'Actor' THEN Name ELSE NULL END) AS Actor FROM 
+( SELECT a.Occupation, a.Name, DENSE_RANK() OVER (PARTITION BY a.Occupation ORDER BY a.Name) rank FROM Occupations a ) c 
+GROUP BY c.rank 
+ORDER BY c.rank;
+================
+
+
+select a.company_code,min(a.founder),count(distinct (b.lead_manager_code)),count(distinct(c.senior_manager_code)),count(distinct(d.manager_code)),count(distinct(e.employee_code)) from 
+company a inner join lead_manager b
+on a.company_code=b.company_code 
+inner join Senior_Manager c
+on  b.company_code=c.company_code and b.lead_manager_code=c.lead_manager_code
+inner join Manager d
+ON c.company_code=d.company_code and c.lead_manager_code=d.lead_manager_code and 
+c.senior_manager_code = d.senior_manager_code
+inner join employee e
+ON d.company_code=e.company_code and d.lead_manager_code=e.lead_manager_code and 
+d.senior_manager_code = e.senior_manager_code
+and d.manager_code=e.manager_code
+group by a.company_code;
