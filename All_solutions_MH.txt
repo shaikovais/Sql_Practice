@@ -1,0 +1,342 @@
+HARD 
+
+select con.contest_id,
+        con.hacker_id, 
+        con.name, 
+        sum(total_submissions), 
+        sum(total_accepted_submissions), 
+        sum(total_views), sum(total_unique_views)
+from contests con 
+join colleges col on con.contest_id = col.contest_id 
+join challenges cha on  col.college_id = cha.college_id 
+left join
+(select challenge_id, sum(total_views) as total_views, sum(total_unique_views) as total_unique_views
+from view_stats group by challenge_id) vs on cha.challenge_id = vs.challenge_id 
+left join
+(select challenge_id, sum(total_submissions) as total_submissions, sum(total_accepted_submissions) as total_accepted_submissions from submission_stats group by challenge_id) ss on cha.challenge_id = ss.challenge_id
+    group by con.contest_id, con.hacker_id, con.name
+        having sum(total_submissions)!=0 or 
+                sum(total_accepted_submissions)!=0 or
+                sum(total_views)!=0 or
+                sum(total_unique_views)!=0
+            order by contest_id;
+
+
+Alternate solution
+
+WITH STATS1 AS (
+SELECT
+     challenge_id
+    ,SUM(ss.total_submissions) AS total_submissions
+    ,SUM(ss.total_accepted_submissions) AS total_accepted_submissions 
+FROM
+    CHALLENGES ch
+    LEFT JOIN SUBMISSION_STATS ss
+        USING(challenge_id)
+GROUP BY
+    challenge_id
+)
+, STATS2 AS (
+SELECT
+    challenge_id
+    ,total_submissions
+    ,total_accepted_submissions
+    ,SUM(vs.total_views) AS total_views
+    ,SUM(vs.total_unique_views) AS total_unique_views
+FROM
+    STATS1
+    LEFT JOIN VIEW_STATS vs
+        USING(challenge_id)
+GROUP BY
+    challenge_id
+    ,total_submissions
+    ,total_accepted_submissions
+)
+SELECT
+      contest_id
+    , c.hacker_id
+    , c.name
+    , SUM(s2.total_submissions) AS total_submissions
+    , SUM(s2.total_accepted_submissions) AS total_accepted_submissions
+    , SUM(s2.total_views) AS total_views
+    , SUM(s2.total_unique_views) AS total_unique_views
+FROM
+    CONTESTS c
+    JOIN COLLEGES co
+        USING(contest_id)
+    JOIN CHALLENGES ch
+        USING(college_id)
+    JOIN STATS2 s2
+        ON ch.challenge_id = s2.challenge_id
+GROUP BY
+      contest_id
+    , c.hacker_id
+    , c.name
+ORDER BY
+    contest_id;
+
+================2======
+
+
+with contestants (submission_date, hacker_id) AS (
+  SELECT submission_date, hacker_id
+  FROM Submissions
+  WHERE submission_date = '2016-03-01'
+  UNION ALL
+  SELECT cur.submission_date, cur.hacker_id
+  FROM Submissions cur, contestants prev
+  WHERE cur.hacker_id = prev.hacker_id
+    AND cur.submission_date - prev.submission_date = 1
+), n_hackers AS (SELECT submission_date, COUNT(DISTINCT hacker_id) nb
+FROM contestants
+GROUP BY submission_date
+), daily (submission_date, id, nb) AS (
+    SELECT submission_date, hacker_id, COUNT(*)
+    FROM Submissions
+    GROUP BY submission_date, hacker_id
+), best_count_of_day (submission_date, nb) AS (
+   SELECT submission_date, max(nb)
+   FROM daily
+   GROUP BY submission_date
+), best_of_day (submission_date, id) AS (
+   SELECT submission_date, MIN(daily.id)
+   FROM daily JOIN best_count_of_day USING(submission_date)
+   WHERE daily.nb = best_count_of_day.nb
+   GROUP BY submission_date
+)
+SELECT submission_date, nb, id, name
+FROM n_hackers JOIN best_of_day USING(submission_date)
+LEFT JOIN hackers h ON h.hacker_id = id
+ORDER BY submission_date;
+
+with DAYSASLEVELS as 
+    (
+    select Submission_date, 
+        count(distinct Hacker_id) as NumHackers
+     from SUBMISSIONS
+     group by Submission_date
+     start with Submission_date='2016-03-01'
+     connect by 
+         prior to_date(Submission_date,'yyyy-mm-dd') 
+             = to_date(Submission_date,'yyyy-mm-dd')-1 
+        and        prior Hacker_id=Hacker_id 
+        and to_date(Submission_date,'yyyy-mm-dd')
+             <= to_date('2016-03-15','yyyy-mm-dd')
+    ),
+/* returns: Submission_date, Hacker_id, numberOfHacks */
+/*           for each hacker on each day */
+    MULTIHACKERS as
+    (
+    select Submission_date, 
+        Hacker_id, 
+        count(Submission_id) as NumHacks
+     from SUBMISSIONS
+     where to_date(Submission_date,'yyyy-mm-dd') 
+        between to_date('2016-03-01','yyyy-mm-dd') 
+         and to_date('2016-03-15','yyyy-mm-dd')
+     group by Submission_date, Hacker_id
+     having count(Submission_id)>0
+    ),
+/* returns: Submission_date, maxNumberOfHacks  on that day   */
+    MOSTHACKS as
+    (
+    select Submission_date as Subdate, 
+        max(NumHacks) as MaxHacks
+     from MULTIHACKERS
+     group by Submission_date
+    ),
+/* returns: date, numHackersWithSubEveryDaySoFar,  */
+/*          smallestHackerIdWithMaxhacks           */
+    SOLNBYID as
+    (
+    select MH1.Submission_date as Sdate,
+        NumHackers,
+        min(MH2.Hacker_id) as WinnerId
+     from MULTIHACKERS MH1 
+      inner join MULTIHACKERS MH2 
+        on MH1.Submission_date=MH2.Submission_date
+      inner join MOSTHACKS 
+        on MH2.NumHacks=maxHacks 
+         and MH2.Submission_date=MOSTHACKS.Subdate
+      inner join DAYSASLEVELS 
+        on MH1.Submission_date=DAYSASLEVELS.Submission_date
+     group by MH1.Submission_date, NumHackers
+    )
+/*  tack on the Name of the winning Hacker_id */
+ select Sdate, NumHackers, H.Hacker_id, H.Name
+  from (SOLNBYID inner join HACKERS H on H.Hacker_id=WinnerId)
+  order by to_date(Sdate,'yyyy-mm-dd');
+
+====================== Medium============
+
+SELECT Name || '(' || SUBSTR(Occupation, 1, 1) || ')'
+FROM OCCUPATIONS
+ORDER BY Name;
+
+SELECT 'There are a total of ' || Count(Name) || ' ' || LOWER(Occupation) || 's.'
+FROM Occupations
+GROUP BY Occupation
+ORDER BY Count(Name), Occupation;
+
+==
+SELECT MIN(CASE WHEN Occupation = 'Doctor' THEN Name ELSE NULL END) AS Doctor,
+MIN(CASE WHEN Occupation = 'Professor' THEN Name ELSE NULL END) AS Professor,
+MIN(CASE WHEN Occupation = 'Singer' THEN Name ELSE NULL END) AS Singer, 
+MIN(CASE WHEN Occupation = 'Actor' THEN Name ELSE NULL END) AS Actor FROM 
+ (SELECT a.Occupation, a.Name, DENSE_RANK() OVER (PARTITION BY a.Occupation ORDER BY  a.Name) rank FROM Occupations a ) c
+GROUP BY c.rank 
+ORDER BY c.rank;
+ 
+===Binary
+
+
+SELECT n,
+    CASE
+        WHEN p IS NULL THEN 'Root'
+        WHEN n IN (SELECT DISTINCT p FROM bst) THEN 'Inner'
+        ELSE 'Leaf'
+    END
+FROM bst
+ORDER BY n;
+
+---
+SELECT LEVEL_1,LVL
+FROM
+(
+    SELECT LEVEL_1,CASE WHEN LEVEL_2 IS NULL THEN 'Root' WHEN LEVEL_3 IS NULL THEN 'Leaf' ELSE 'Inner' END AS LVL
+    FROM
+    (
+    SELECT DISTINCT A.N AS LEVEL_1,A.P LEVEL_2,B.P AS LEVEL_3
+    FROM BST A LEFT OUTER JOIN BST B
+    ON A.N=B.P
+    )
+)
+ORDER BY LEVEL_1;
+
+=====
+select a.company_code,min(a.founder),count(distinct (b.lead_manager_code)),count(distinct(c.senior_manager_code)),count(distinct(d.manager_code)),count(distinct(e.employee_code)) from 
+company a inner join lead_manager b
+on a.company_code=b.company_code 
+inner join Senior_Manager c
+on  b.company_code=c.company_code and b.lead_manager_code=c.lead_manager_code
+inner join Manager d
+ON c.company_code=d.company_code and c.lead_manager_code=d.lead_manager_code and 
+c.senior_manager_code = d.senior_manager_code
+inner join employee e
+ON d.company_code=e.company_code and d.lead_manager_code=e.lead_manager_code and 
+d.senior_manager_code = e.senior_manager_code
+and d.manager_code=e.manager_code
+group by a.company_code;
+
+==========
+select (round(max(long_w),4)+round(max(lat_n),4)) -(round(min(lat_n),4) + round(min(long_w),4)) from station   ;
+=========
+SELECT
+    ROUND(SQRT(
+        POWER(MAX(LAT_N)  - MIN(LAT_N),  2)
+      + POWER(MAX(LONG_W) - MIN(LONG_W), 2)
+    ), 4)
+FROM 
+    STATION;
+============
+select round(median(lat_n),4) from station;
+===========
+SELECT case when GRADE < 8 then 'NULL' 
+else NAME end as name, GRADE, MARKS
+FROM STUDENTS , GRADES
+WHERE MARKS BETWEEN MIN_MARK AND MAX_MARK
+ORDER BY GRADE DESC, NAME ;
+===========
+select h.hacker_id,h.name from hackers h,challenges c ,difficulty d,submissions s 
+where h.hacker_id=s.hacker_id
+and c.challenge_id=s.challenge_id
+and c.difficulty_level=d.difficulty_level
+and s.score=d.score
+group by h.hacker_id,h.name having  count(h.hacker_id)>1
+ order by count(c.challenge_id) desc,h.hacker_id ;
+============
+SELECT id, age, coins_needed, power
+FROM 
+(
+  SELECT W.id, WP.age, W.coins_needed, W.power,
+    ROW_NUMBER() OVER 
+        (
+            PARTITION BY W.code,W.power  
+            ORDER BY W.coins_needed, W.power DESC
+        ) AS RowNumber
+    FROM Wands W 
+    INNER JOIN Wands_Property WP  ON W.code = WP.code
+    WHERE WP.is_evil = 0 ) wn
+    WHERE RowNumber = 1
+ORDER BY power DESC, age DESC;
+================
+
+SELECT 
+HACKER_ID,NAME,
+CHALLENGES_CREATED
+from
+(
+SELECT 
+H.HACKER_ID,
+H.NAME,
+CHALLENGES_CREATED,
+MAX(CHALLENGES_CREATED) OVER (ORDER BY 1) AS MX_CHLNG,
+COUNT(CHALLENGES_CREATED) OVER(PARTITION BY CHALLENGES_CREATED) AS NO_OF_COMMON_CHLNG_HCKR
+FROM HACKERS H
+JOIN (
+SELECT DISTINCT
+     HACKER_ID, COUNT(*) as CHALLENGES_CREATED FROM CHALLENGES
+            group by hacker_id order by CHALLENGES_CREATED desc) C
+ON H.HACKER_ID=C.HACKER_ID
+order by CHALLENGES_CREATED ) A
+WHERE NO_OF_COMMON_CHLNG_HCKR=1 or MX_CHLNG = CHALLENGES_CREATED
+ORDER BY CHALLENGES_CREATED DESC, HACKER_ID
+;
+=============
+select hacker_id,name,sum1
+from 
+(
+select a.hacker_id,a.name,sum(b.max_indiv) as sum1 from hackers a inner join 
+(
+SELECT hacker_id,challenge_id,max(score) as max_indiv from submissions
+group by hacker_id,challenge_id  ) b
+on a.hacker_id=b.hacker_id
+group by a.hacker_id,a.name ) AB
+where sum1 <> 0
+order  by sum1 desc , hacker_id asc
+;
+================
+select min(start_date),max(end_date) from
+(
+select start_date,end_date, 
+rank() over(order by start_date)  dr ,
+end_date - rank() over(order by start_date)  group1 
+from projects)
+group by group1
+order by count(group1) asc , min(start_date) asc
+;
+==========
+select s.name 
+from 
+students s, 
+friends f, 
+packages p, 
+packages p2 
+where s.id = f.id and 
+f.friend_id = p2.id and f.id = p.id 
+and p.salary < p2.salary order by p2.salary;
+=========
+select distinct f1.x,f1.y from Functions F1 join Functions F2 on (f1.x = f2.y and f1.y = f2.x and f1.rowid <> f2.rowid) 
+where f1.x <= f1.y order by f1.x;
+=======
+select LISTAGG(l, '&') WITHIN GROUP (ORDER BY l) from
+(
+select a.l 
+from (select level l from dual connect by level <= 1000) a
+, (select level m from dual connect by level <= 1000 ) b
+where b.m <= a.l
+group by a.l
+having count(case l/m when trunc(l/m) then 'Y' end) = 2 
+order by a.l) ;
+================
+
